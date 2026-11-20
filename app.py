@@ -1,10 +1,11 @@
 import os
 import re
+import html
 import json
 import uuid
 import sqlite3
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict
 import streamlit as st
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -16,6 +17,36 @@ try:
     PYMONGO_AVAILABLE = True
 except ImportError:
     PYMONGO_AVAILABLE = False
+
+
+# ==========================================
+# 0. دوال مساعدة للأسرار والبيئة السحابية
+# ==========================================
+def get_secret_safe(key: str, default: str = "") -> str:
+    """قراءة المفاتيح السرية من st.secrets أو متغيرات البيئة دون تعريضها في الواجهة."""
+    try:
+        if key in st.secrets:
+            val = st.secrets[key]
+            return str(val).strip() if val is not None else default
+    except Exception:
+        pass
+    return os.getenv(key, default).strip()
+
+
+def is_running_on_cloud() -> bool:
+    """الكشف التلقائي عن التشغيل على Streamlit Cloud."""
+    if get_secret_safe("IS_CLOUD", "").lower() in ("true", "1", "yes"):
+        return True
+    return os.path.exists("/mount/src")
+
+
+@st.cache_resource(show_spinner=False)
+def get_cached_mongo_client(uri: str):
+    """إنشاء اتصال MongoDB واحد مُخزّن مؤقتاً لتسريع التطبيق ومنع تكرار الاتصال."""
+    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    client.admin.command("ping")
+    return client
+
 
 # ==========================================
 # 1. إعدادات الصفحة والتصميم العربي (RTL)
@@ -30,7 +61,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
-    
+
     html, body, [class*="css"] {
         font-family: 'Cairo', sans-serif;
         direction: rtl;
@@ -43,6 +74,10 @@ st.markdown("""
     .stTextArea textarea {
         font-size: 1.15rem;
         line-height: 1.9;
+    }
+    /* مسافة أمان أسفل الشريط الجانبي لمنع تداخل أزرار Streamlit على الهاتف */
+    section[data-testid="stSidebar"] > div:first-child {
+        padding-bottom: 110px !important;
     }
     .main-header {
         background: linear-gradient(135deg, #2C1E16 0%, #6B4423 100%);
@@ -86,6 +121,51 @@ st.markdown("""
         direction: ltr;
         text-align: left;
     }
+    /* بطاقات الإحصائيات جنباً إلى جنب حتى على شاشة الهاتف */
+    .stats-row {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        margin: 10px 0 6px 0;
+        width: 100%;
+    }
+    .stat-card {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(212, 175, 55, 0.28);
+        border-radius: 10px;
+        padding: 10px 8px;
+        text-align: center;
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        color: #C9BFA8;
+        margin-bottom: 4px;
+    }
+    .stat-value {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #FFFFFF;
+        line-height: 1.2;
+    }
+    .secure-badge {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin: 6px 0 10px 0;
+        border: 1px solid rgba(76, 175, 80, 0.35);
+        background: rgba(76, 175, 80, 0.12);
+        color: #A5D6A7;
+    }
+    .warn-badge {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin: 6px 0 10px 0;
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        background: rgba(255, 193, 7, 0.10);
+        color: #FFE082;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -119,12 +199,12 @@ class AIPoemAnalysis(BaseModel):
 
 
 # ==========================================
-# 3. مدير الأرشيف وقاعدة البيانات (SQLite + MongoDB Atlas)
+# 3. مدير الأرشيف وقاعدة البيانات (MongoDB Atlas + SQLite)
 # ==========================================
 class ArchiveManager:
     def __init__(
         self,
-        backend: str = "SQLite (محلي)",
+        backend: str = "mongodb",
         sqlite_path: str = "albidan_archive.db",
         mongo_uri: str = "",
         mongo_db_name: str = "albidan_corpus"
@@ -137,14 +217,13 @@ class ArchiveManager:
         self.status_message = f"متصل بقاعدة SQLite المحلية ({sqlite_path})"
         self.mongo_db = None
 
-        if backend == "MongoDB Atlas (سحابي)" and self.mongo_uri:
+        if backend == "mongodb" and self.mongo_uri:
             if not PYMONGO_AVAILABLE:
                 self.status_message = "مكتبة pymongo غير مثبتة؛ تم التحويل مؤقتاً إلى SQLite."
                 self._init_sqlite()
             else:
                 try:
-                    client = MongoClient(self.mongo_uri, serverSelectionTimeoutMS=4000)
-                    client.admin.command("ping")
+                    client = get_cached_mongo_client(self.mongo_uri)
                     self.mongo_db = client[self.mongo_db_name]
                     self.active_mode = "mongodb"
                     self.status_message = f"متصل بنجاح بـ MongoDB Atlas ({self.mongo_db_name})"
@@ -353,6 +432,17 @@ class ArchiveManager:
         return items
 
     def get_stats(self) -> Dict[str, int]:
+        if self.active_mode == "mongodb":
+            poems_count = self.mongo_db["poems"].count_documents({})
+            terms_count = self.mongo_db["glossary"].count_documents({})
+            cursor = self.mongo_db["poems"].find({}, {"analysis.lines": 1})
+            total_lines = sum(len(doc.get("analysis", {}).get("lines", [])) for doc in cursor)
+            return {
+                "poems_count": poems_count,
+                "lines_count": total_lines,
+                "terms_count": terms_count,
+            }
+
         poems = self.list_poems()
         glossary = self.list_glossary()
         total_lines = sum(len(p.get("analysis", {}).get("lines", [])) for p in poems)
@@ -391,7 +481,7 @@ class LocalHassaniyaEngine:
                     max(1, len([c for c in re.sub(r'^[ال]+', '', w) if c not in self.long_vowels]) - 1)
                     for w in words
                 )
-            clean = re.sub(r'[ًٌٍَُِّْ\s]', '', norm)
+            clean = re.sub(r'[ًٌٍَُِّْ\s]', '', norm)
             rhyme = clean[-2:] if len(clean) >= 2 else clean
             details.append({
                 "original_line": line,
@@ -412,7 +502,7 @@ class LocalHassaniyaEngine:
         return {
             "poem_type": poem_type,
             "dominant_meter": details[0]["estimated_meter"] if details else "غير محدد",
-            "cultural_context": "أدخل مفتاح Gemini API في الشريط الجانبي لتفعيل التحليل الثقافي، التشكيل الصوتي الدقيق، والترجمة العالمية.",
+            "cultural_context": "فعّل الذكاء الاصطناعي (AI Mode) لتفعيل التحليل الثقافي، التشكيل الصوتي الدقيق، والترجمة العالمية.",
             "recommended_azawan": "لبياظ (تقديري)",
             "lines": details,
             "glossary": [],
@@ -440,17 +530,17 @@ def transcribe_hassaniya_audio(
     audio_bytes: bytes,
     mime_type: str,
     api_key: str,
-    model_name: str = "gemini-3.8-flash"
+    model_name: str = "gemini-2.5-flash"
 ) -> str:
     client = genai.Client(api_key=api_key)
     transcription_prompt = """
     أنت خبير في اللهجة الحسانية المغربية والموريتانية والشعر الحساني (لغنى، الكاف، الطلعة، التبراع).
     استمع بدقة لهذا التسجيل الصوتي وقم بتفريغه نصياً وفق القواعد التالية:
-    1. اكتب الكلمات تماماً كما تُنطق باللهجة الحسانية الأصيلة دون تحويلها للفصحى.
-    2. استخدم الحرف (گ) للقاف المعقودة الحسانية (مثل: گلب، گال، اگليب، لْحگ).
-    3. افصل كل شطر شعري (تافلويت) في سطر مستقل تماماً.
-    4. تجاهل الموسيقى الخلفية أو المقدمات الكلامية غير الشعرية إن وجدت.
-    5. أخرج الأبيات الشعرية فقط دون أي عناوين أو تعليقات أو شرح إضافي.
+1. اكتب الكلمات تماماً كما تُنطق باللهجة الحسانية الأصيلة دون تحويلها للفصحى.
+2. استخدم الحرف (گ) للقاف المعقودة الحسانية (مثل: گلب، گال، اگليب، لْحگ).
+3. افصل كل شطر شعري (تافلويت) في سطر مستقل تماماً.
+4. تجاهل الموسيقى الخلفية أو المقدمات الكلامية غير الشعرية إن وجدت.
+5. أخرج الأبيات الشعرية فقط دون أي عناوين أو تعليقات أو شرح إضافي.
     """
     response = client.models.generate_content(
         model=model_name,
@@ -463,16 +553,20 @@ def transcribe_hassaniya_audio(
     return (response.text or "").strip()
 
 
-def analyze_with_gemini(poem_text: str, api_key: str, model_name: str = "gemini-3.8-flash") -> Dict:
+def analyze_with_gemini(
+    poem_text: str,
+    api_key: str,
+    model_name: str = "gemini-2.5-flash"
+) -> Dict:
     client = genai.Client(api_key=api_key)
     system_instruction = """
     أنت خبير أكاديمي وعروضي متخصص في الأدب والشعر الشعبي الحساني المغربي والموريتاني (لغنى والتبراع) وموسيقى أزوان.
     مهمتك تحليل النص الشعري الحساني بدقة لغوية وعروضية فائقة:
-    1. راعِ ظاهرة "الابتداء بالساكن" في اللهجة الحسانية (مثل: لْحگ، اگْليب، شْوي، مْعاك) عند التشكيل الصوتي وعدّ المتحركات.
-    2. عدّ المتحركات هو أساس الوزن الحساني (السغير = 6، لبتيت الناقص = 7، لبتيت التام = 8، البت لكبير = 9+).
-    3. ميّز بدقة بين التبراع (بيتان متفقا القافية)، الكاف (4 أشطر غالباً بقافية أ-ب-أ-ب)، والطلعة (6 أشطر فأكثر).
-    4. استخرج المفردات الحسانية الأصيلة واشرحها بوضوح.
-    5. قدم ترجمة شعرية عالية الجودة للإنجليزية والفرنسية تبرز جماليات الصحراء للجمهور العالمي.
+1. راعِ ظاهرة "الابتداء بالساكن" في اللهجة الحسانية (مثل: لْحگ، اگْليب، شْوي، مْعاك) عند التشكيل الصوتي وعدّ المتحركات.
+2. عدّ المتحركات هو أساس الوزن الحساني (السغير = 6، لبتيت الناقص = 7، لبتيت التام = 8، البت لكبير = 9+).
+3. ميّز بدقة بين التبراع (بيتان متفقا القافية)، الكاف (4 أشطر غالباً بقافية أ-ب-أ-ب)، والطلعة (6 أشطر فأكثر).
+4. استخرج المفردات الحسانية الأصيلة واشرحها بوضوح.
+5. قدم ترجمة شعرية عالية الجودة للإنجليزية والفرنسية تبرز جماليات الصحراء للجمهور العالمي.
     """
     response = client.models.generate_content(
         model=model_name,
@@ -580,8 +674,13 @@ def load_poem_into_lab(record: Dict):
 
 
 # ==========================================
-# 8. الشريط الجانبي (التنقل + الذكاء الاصطناعي + قاعدة البيانات)
+# 8. الشريط الجانبي الآمن والمُحسّن للهاتف
 # ==========================================
+on_cloud = is_running_on_cloud()
+secret_mongo_uri = get_secret_safe("MONGODB_URI", "")
+secret_mongo_db = get_secret_safe("MONGODB_DB_NAME", "albidan_corpus")
+secret_gemini_key = get_secret_safe("GEMINI_API_KEY", "")
+
 with st.sidebar:
     st.header("🧭 التنقل الرئيسي")
     nav_page = st.radio(
@@ -597,37 +696,101 @@ with st.sidebar:
 
     st.divider()
     st.header("🗄️ قاعدة البيانات والأرشيف")
-    db_backend = st.selectbox(
+
+    # على السحابة يُعتمد التخزين السحابي فقط؛ محلياً يتوفر الخياران
+    if on_cloud:
+        storage_options = ["التخزين السحابي — MongoDB Atlas"]
+    else:
+        storage_options = [
+            "التخزين السحابي — MongoDB Atlas",
+            "التخزين المحلي — SQLite"
+        ]
+
+    default_storage_idx = 0 if (on_cloud or secret_mongo_uri) else 1
+    db_choice = st.selectbox(
         "نوع التخزين:",
-        ["SQLite (محلي)", "MongoDB Atlas (سحابي)"]
+        options=storage_options,
+        index=min(default_storage_idx, len(storage_options) - 1)
     )
-    mongo_uri = ""
-    if db_backend == "MongoDB Atlas (سحابي)":
-        mongo_uri = st.text_input(
-            "رابط اتصال MongoDB URI:",
-            value=os.getenv("MONGODB_URI", ""),
-            type="password",
-            help="مثال: mongodb+srv://user:pass@cluster.mongodb.net/"
+
+    if "MongoDB" in db_choice:
+        backend_code = "mongodb"
+        if secret_mongo_uri:
+            # استخدام الرابط من الخادم مباشرة دون عرضه داخل حقل نصي
+            mongo_uri = secret_mongo_uri
+        else:
+            mongo_uri = st.text_input(
+                "رابط اتصال MongoDB:",
+                value="",
+                type="password",
+                placeholder="أدخل الرابط يدوياً للتجربة المحلية...",
+                help="يُفضّل حفظ MONGODB_URI في إعدادات Secrets"
+            )
+    else:
+        backend_code = "sqlite"
+        mongo_uri = ""
+
+    archive = ArchiveManager(
+        backend=backend_code,
+        mongo_uri=mongo_uri,
+        mongo_db_name=secret_mongo_db
+    )
+
+    if archive.active_mode == "mongodb":
+        st.markdown(
+            f'<div class="secure-badge">🔒 {html.escape(archive.status_message)}</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f'<div class="warn-badge">💾 {html.escape(archive.status_message)}</div>',
+            unsafe_allow_html=True
         )
 
-    archive = ArchiveManager(backend=db_backend, mongo_uri=mongo_uri)
-    st.caption(f"الحالة: {archive.status_message}")
-
     stats = archive.get_stats()
-    sc1, sc2 = st.columns(2)
-    sc1.metric("القصائد", stats["poems_count"])
-    sc2.metric("المفردات", stats["terms_count"])
+    st.markdown(
+        f"""
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">القصائد</div>
+                <div class="stat-value">{stats['poems_count']}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">المفردات</div>
+                <div class="stat-value">{stats['terms_count']}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.divider()
     st.header("🧠 محرك الذكاء الاصطناعي")
-    api_key = st.text_input(
-        "مفتاح Gemini API:",
-        value=os.getenv("GEMINI_API_KEY", ""),
-        type="password"
-    )
-    model_name = st.text_input(
-        "اسم نموذج Gemini:",
-        value="gemini-3.8-flash"
+
+    if secret_gemini_key:
+        # استخدام المفتاح بأمان من الخادم دون إظهاره أو تمكين زر العين
+        api_key = secret_gemini_key
+        st.markdown(
+            '<div class="secure-badge">🔑 مفتاح Gemini API مُفعّل بأمان من الخادم</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        api_key = st.text_input(
+            "مفتاح Gemini API:",
+            value="",
+            type="password",
+            placeholder="أدخل مفتاح API هنا..."
+        )
+
+    available_models = [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.0-flash"
+    ]
+    model_name = st.selectbox(
+        "نموذج Gemini:",
+        options=available_models,
+        index=0
     )
     use_ai = st.toggle("تفعيل التحليل الذكي (AI Mode)", value=bool(api_key))
 
@@ -687,7 +850,7 @@ if nav_page == "🧪 المختبر والتحليل":
 
                 if transcribe_only_btn or transcribe_and_analyze_btn:
                     if not api_key.strip():
-                        st.warning("يرجى إدخال مفتاح Gemini API في الشريط الجانبي لتشغيل التفريغ الصوتي.")
+                        st.warning("يرجى ضبط مفتاح Gemini API لتشغيل التفريغ الصوتي.")
                     else:
                         try:
                             with st.spinner("جاري الاستماع وتفريغ القصيدة الحسانية..."):
@@ -695,7 +858,7 @@ if nav_page == "🧪 المختبر والتحليل":
                                     uploaded_audio.getvalue(),
                                     get_audio_mime_type(uploaded_audio),
                                     api_key.strip(),
-                                    model_name.strip()
+                                    model_name
                                 )
                             if not transcribed:
                                 st.warning("لم يتم التعرف على نص واضح في التسجيل.")
@@ -705,9 +868,9 @@ if nav_page == "🧪 المختبر والتحليل":
                                 if transcribe_and_analyze_btn:
                                     with st.spinner("جاري التحليل العروضي والترجمة..."):
                                         st.session_state["analysis_result"] = analyze_with_gemini(
-                                            transcribed, api_key.strip(), model_name.strip()
+                                            transcribed, api_key.strip(), model_name
                                         )
-                                        st.session_state["analysis_source"] = f"Audio + AI ({model_name.strip()})"
+                                        st.session_state["analysis_source"] = f"Audio + AI ({model_name})"
                         except Exception as e:
                             st.error(f"حدث خطأ أثناء معالجة الصوت: {e}")
 
@@ -728,9 +891,9 @@ if nav_page == "🧪 المختبر والتحليل":
                 with st.spinner("جاري التقطيع الصوتي الحساني والترجمة الأدبية..."):
                     try:
                         st.session_state["analysis_result"] = analyze_with_gemini(
-                            poem_input, api_key.strip(), model_name.strip()
+                            poem_input, api_key.strip(), model_name
                         )
-                        st.session_state["analysis_source"] = f"AI ({model_name.strip()})"
+                        st.session_state["analysis_source"] = f"AI ({model_name})"
                     except Exception as e:
                         st.error(f"حدث خطأ في الاتصال بـ API: {e}")
                         st.info("تم التحويل تلقائياً للمحلل المحلي.")
@@ -800,11 +963,11 @@ if nav_page == "🧪 المختبر والتحليل":
             col_en, col_fr = st.columns(2)
             with col_en:
                 st.markdown("**English Poetic Translation:**")
-                en_html = res["english_translation"].replace("\n", "<br>")
+                en_html = html.escape(res["english_translation"]).replace("\n", "<br>")
                 st.markdown(f"<div class='translation-box'>{en_html}</div>", unsafe_allow_html=True)
             with col_fr:
                 st.markdown("**Traduction Poétique (Français):**")
-                fr_html = res["french_translation"].replace("\n", "<br>")
+                fr_html = html.escape(res["french_translation"]).replace("\n", "<br>")
                 st.markdown(f"<div class='translation-box'>{fr_html}</div>", unsafe_allow_html=True)
 
             st.divider()
@@ -885,7 +1048,7 @@ elif nav_page == "📚 أرشيف القصائد (المدونة)":
         for rec in poems_list:
             header_label = f"📜 {rec['title']}  |  {rec['poem_type']}  |  {rec['dominant_meter']}  |  ✍️ {rec['poet']} ({rec['created_at']})"
             with st.expander(header_label, expanded=False):
-                st.markdown(f"<div class='poem-card'>{rec['poem_text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='poem-card'>{html.escape(rec['poem_text'])}</div>", unsafe_allow_html=True)
                 st.caption(f"📍 المنطقة: {rec['region']}  •  🎵 مقام أزوان: {rec['azawan_mode']}  •  ⚙️ المحرك: {rec['source_engine']}")
 
                 a_col1, a_col2 = st.columns(2)
