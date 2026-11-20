@@ -530,7 +530,7 @@ def transcribe_hassaniya_audio(
     audio_bytes: bytes,
     mime_type: str,
     api_key: str,
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.8-flash"
 ) -> str:
     client = genai.Client(api_key=api_key)
     transcription_prompt = """
@@ -548,7 +548,6 @@ def transcribe_hassaniya_audio(
             types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
             transcription_prompt
         ],
-        config=types.GenerateContentConfig(temperature=0.1),
     )
     return (response.text or "").strip()
 
@@ -556,7 +555,7 @@ def transcribe_hassaniya_audio(
 def analyze_with_gemini(
     poem_text: str,
     api_key: str,
-    model_name: str = "gemini-2.5-flash"
+    model_name: str = "gemini-3.8-flash"
 ) -> Dict:
     client = genai.Client(api_key=api_key)
     system_instruction = """
@@ -575,7 +574,6 @@ def analyze_with_gemini(
             system_instruction=system_instruction,
             response_mime_type="application/json",
             response_schema=AIPoemAnalysis,
-            temperature=0.25,
         ),
     )
     parsed = AIPoemAnalysis.model_validate_json(response.text)
@@ -783,9 +781,9 @@ with st.sidebar:
         )
 
     available_models = [
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
-        "gemini-2.0-flash"
+        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-pro-preview",
     ]
     model_name = st.selectbox(
         "نموذج Gemini:",
