@@ -20,7 +20,7 @@ except ImportError:
 
 
 # ==========================================
-# 0. دوال الأسرار والاتصال السحابي
+# 0. دوال الأسرار والاتصال السحابي الآمن
 # ==========================================
 def get_secret_safe(key: str, default: str = "") -> str:
     try:
@@ -46,10 +46,10 @@ def get_cached_mongo_client(uri: str):
 
 
 # ==========================================
-# 1. إعدادات الصفحة والهوية البصرية الفاخرة
+# 1. إعدادات الصفحة والتصميم المستوحى من البوابات الثقافية
 # ==========================================
 st.set_page_config(
-    page_title="مختبر البيظان | الشعر الحساني وهندسة أزوان",
+    page_title="مختبر البيظان | ALBIDAN — الشعر الحساني وهندسة أزوان",
     page_icon="🐪",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -57,33 +57,36 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&display=swap');
 
     :root {
-        --bg-deep: #0D0B09;
-        --bg-surface: #171411;
-        --bg-elevated: #201B17;
-        --gold-primary: #D4AF37;
-        --gold-light: #F2D67B;
-        --gold-border: rgba(212, 175, 55, 0.24);
-        --text-main: #F4EFE6;
-        --text-muted: #A99E8F;
+        --bg-page: #F8F7F4;
+        --bg-card: #FFFFFF;
+        --ink-primary: #162133;
+        --ink-secondary: #526075;
+        --brand-blue: #1E3A5F;
+        --brand-blue-dark: #142842;
+        --brand-gold: #C27803;
+        --brand-gold-soft: #FEF3C7;
+        --border-soft: #E7E2D8;
+        --shadow-card: 0 6px 24px rgba(22, 33, 51, 0.05);
+        --shadow-hover: 0 14px 32px rgba(22, 33, 51, 0.10);
     }
 
-    /* الخلفية والخطوط العامة */
+    /* الإعدادات العامة والاتجاه العربي */
     .stApp {
-        background: radial-gradient(circle at top center, #1C1611 0%, #0D0B09 65%);
-        color: var(--text-main);
+        background-color: var(--bg-page) !important;
+        color: var(--ink-primary) !important;
     }
 
     html, body, [class*="css"] {
-        font-family: 'Cairo', sans-serif;
+        font-family: 'Cairo', sans-serif !important;
         direction: rtl;
         text-align: right;
-        color: var(--text-main);
+        color: var(--ink-primary);
     }
 
-    /* تنظيف واجهة Streamlit الافتراضية مع إبقاء زر الشريط الجانبي متاحاً */
+    /* إخفاء عناصر Streamlit التطويرية مع الإبقاء على زر القائمة الجانبية */
     #MainMenu, footer, .stDeployButton, [data-testid="stToolbarActions"] {
         visibility: hidden !important;
         display: none !important;
@@ -92,141 +95,269 @@ st.markdown("""
         background: transparent !important;
     }
     .block-container {
-        padding-top: 1.6rem !important;
-        padding-bottom: 4.5rem !important;
-        max-width: 1180px !important;
+        padding-top: 1.2rem !important;
+        padding-bottom: 5rem !important;
+        max-width: 1200px !important;
     }
 
-    /* الشريط الجانبي */
+    /* الشريط الجانبي (إعدادات النظام) */
     section[data-testid="stSidebar"] {
-        background-color: #13100D !important;
-        border-left: 1px solid var(--gold-border) !important;
+        background-color: #FFFFFF !important;
+        border-left: 1px solid var(--border-soft) !important;
     }
     section[data-testid="stSidebar"] > div:first-child {
         padding-bottom: 110px !important;
     }
 
-    /* الترويسة الرئيسية (Hero Banner) */
-    .hero-banner {
-        position: relative;
-        background: linear-gradient(135deg, rgba(38, 27, 18, 0.96) 0%, rgba(20, 16, 13, 0.98) 60%, rgba(56, 38, 20, 0.92) 100%);
-        border: 1px solid rgba(212, 175, 55, 0.35);
-        border-radius: 18px;
-        padding: 1.8rem 2rem;
-        margin-bottom: 1.3rem;
-        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
-        overflow: hidden;
+    /* شريط التنقل العلوي */
+    .navbar-wrap {
+        background: #FFFFFF;
+        border: 1px solid var(--border-soft);
+        border-radius: 16px;
+        padding: 0.75rem 1.2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 12px rgba(22, 33, 51, 0.04);
     }
-    .hero-banner::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 6px;
-        height: 100%;
-        background: linear-gradient(180deg, var(--gold-light), var(--gold-primary), #8A6619);
-    }
-    .hero-top {
+    .brand-logo {
         display: flex;
-        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding-top: 4px;
+    }
+    .brand-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #1E3A5F 0%, #2E5A88 100%);
+        color: #FDE68A;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
+    .brand-text-main {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: var(--brand-blue);
+        line-height: 1.15;
+    }
+    .brand-text-sub {
+        font-size: 0.72rem;
+        color: var(--brand-gold);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    /* قسم البداية (Hero Section) */
+    .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+        padding: 5px 14px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .hero-headline {
+        font-size: 2.35rem;
+        font-weight: 900;
+        color: var(--ink-primary);
+        line-height: 1.3;
+        margin: 0 0 1rem 0;
+    }
+    .hero-headline span {
+        color: var(--brand-gold);
+    }
+    .hero-desc {
+        font-size: 1.06rem;
+        color: var(--ink-secondary);
+        line-height: 1.85;
+        margin-bottom: 1.5rem;
+    }
+
+    /* بطاقة العرض المرئية بجانب الـ Hero */
+    .hero-visual-card {
+        background: linear-gradient(145deg, #1E3A5F 0%, #13253D 65%, #2B2118 100%);
+        border-radius: 22px;
+        padding: 1.8rem;
+        color: #FFFFFF;
+        box-shadow: 0 18px 42px rgba(30, 58, 95, 0.22);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(253, 230, 138, 0.25);
+    }
+    .hero-visual-top {
+        display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 1rem;
+        margin-bottom: 1.1rem;
     }
-    .hero-badge {
-        display: inline-block;
+    .hero-visual-pill {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #FDE68A;
         font-size: 0.78rem;
         font-weight: 700;
-        letter-spacing: 0.6px;
-        color: var(--gold-light);
-        background: rgba(212, 175, 55, 0.12);
-        border: 1px solid rgba(212, 175, 55, 0.35);
         padding: 4px 12px;
         border-radius: 999px;
-        margin-bottom: 0.6rem;
     }
-    .hero-title {
-        font-size: 1.85rem;
-        font-weight: 800;
-        margin: 0;
-        background: linear-gradient(90deg, #F5E6C8 0%, #D4AF37 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        line-height: 1.35;
-    }
-    .hero-subtitle {
-        color: var(--text-muted);
-        font-size: 0.98rem;
-        margin: 0.45rem 0 0 0;
-        max-width: 680px;
-    }
-    .hero-stats {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    .hero-stat-pill {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--gold-border);
+    .hero-poem-quote {
+        font-family: 'Amiri', serif !important;
+        font-size: 1.48rem;
+        line-height: 2.05;
+        color: #FFFDF7;
+        background: rgba(255, 255, 255, 0.06);
+        border-right: 4px solid #F59E0B;
         border-radius: 12px;
-        padding: 10px 16px;
-        min-width: 92px;
-        text-align: center;
-        backdrop-filter: blur(8px);
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.2rem;
     }
-    .hero-stat-num {
-        font-size: 1.45rem;
+    .hero-mini-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .hero-mini-box {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        padding: 10px 8px;
+        text-align: center;
+    }
+    .hero-mini-num {
+        font-size: 1.35rem;
         font-weight: 800;
-        color: var(--gold-light);
+        color: #FDE68A;
         line-height: 1.1;
     }
-    .hero-stat-lbl {
-        font-size: 0.78rem;
-        color: var(--text-muted);
+    .hero-mini-lbl {
+        font-size: 0.75rem;
+        color: #CBD5E1;
         margin-top: 3px;
     }
 
-    /* شريط التنقل العلوي الاحترافي (Pills Navigation) */
-    div[data-testid="stRadio"] > div[role="radiogroup"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-        background: var(--bg-surface);
-        padding: 6px;
-        border-radius: 14px;
-        border: 1px solid var(--gold-border);
-        margin-bottom: 1.2rem;
+    /* عناوين الأقسام (Section Headers) */
+    .section-head {
+        text-align: center;
+        margin: 2.4rem 0 1.6rem 0;
     }
-    div[data-testid="stRadio"] label {
-        flex: 1 1 auto;
+    .section-head h2 {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--ink-primary);
+        margin: 0 0 0.4rem 0;
+    }
+    .section-head p {
+        font-size: 1rem;
+        color: var(--ink-secondary);
+        margin: 0 auto;
+        max-width: 640px;
+    }
+
+    /* تنسيق حاويات البطاقات الأصلية st.container(border=True) لتشبه TamazightForAll */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-soft) !important;
+        border-radius: 18px !important;
+        padding: 0.45rem !important;
+        box-shadow: var(--shadow-card) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover) !important;
+        border-color: #D6C9B4 !important;
+    }
+
+    /* محتوى البطاقة التفاعلية */
+    .feature-card-body {
+        padding: 0.35rem 0.25rem 0.6rem 0.25rem;
+        min-height: 185px;
+    }
+    .feature-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.85rem;
+    }
+    .feature-icon-box {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        background: transparent !important;
-        border: 1px solid transparent !important;
-        border-radius: 10px !important;
-        padding: 10px 16px !important;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        margin: 0 !important;
+        font-size: 1.45rem;
     }
-    div[data-testid="stRadio"] label:hover {
-        background: rgba(212, 175, 55, 0.08) !important;
-        border-color: rgba(212, 175, 55, 0.25) !important;
+    .badge-pill {
+        font-size: 0.74rem;
+        font-weight: 800;
+        padding: 4px 11px;
+        border-radius: 999px;
     }
-    div[data-testid="stRadio"] label[data-checked="true"],
-    div[data-testid="stRadio"] label:has(input:checked) {
-        background: linear-gradient(135deg, #D4AF37 0%, #B38B24 100%) !important;
-        color: #14100C !important;
-        font-weight: 800 !important;
-        box-shadow: 0 4px 14px rgba(212, 175, 55, 0.28);
+    .badge-amber { background: #FEF3C7; color: #92400E; }
+    .badge-blue  { background: #DBEAFE; color: #1E40AF; }
+    .badge-teal  { background: #CCFBF1; color: #115E59; }
+    .badge-purple{ background: #EDE9FE; color: #5B21B6; }
+    .badge-rose  { background: #FFE4E6; color: #9F1239; }
+    .badge-emerald{ background: #D1FAE5; color: #065F46; }
+
+    .feature-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--ink-primary);
+        margin: 0 0 0.2rem 0;
     }
-    div[data-testid="stRadio"] label:has(input:checked) p {
-        color: #14100C !important;
-        font-weight: 800 !important;
+    .feature-subtitle {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--brand-gold);
+        margin: 0 0 0.55rem 0;
     }
-    /* إخفاء الدائرة الافتراضية لزر الراديو */
-    div[data-testid="stRadio"] label > div:first-child {
-        display: none !important;
+    .feature-desc {
+        font-size: 0.9rem;
+        color: var(--ink-secondary);
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    /* الأزرار (Primary / Secondary) */
+    .stButton > button[kind="primary"],
+    .stFormSubmitButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #1E3A5F 0%, #274C77 100%) !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        padding: 0.58rem 1.2rem !important;
+        box-shadow: 0 4px 14px rgba(30, 58, 95, 0.20) !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button[kind="primary"]:hover,
+    .stFormSubmitButton > button[kind="primary"]:hover {
+        background: linear-gradient(135deg, #142842 0%, #1E3A5F 100%) !important;
+        box-shadow: 0 6px 18px rgba(30, 58, 95, 0.28) !important;
+    }
+    .stButton > button[kind="secondary"],
+    .stDownloadButton > button {
+        background: #F8F7F4 !important;
+        color: var(--brand-blue) !important;
+        border: 1px solid #DCD5C7 !important;
+        border-radius: 11px !important;
+        font-weight: 700 !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button[kind="secondary"]:hover,
+    .stDownloadButton > button:hover {
+        background: #FEF3C7 !important;
+        border-color: #D97706 !important;
+        color: #92400E !important;
     }
 
     /* حقول الإدخال والكتابة الشعرية */
@@ -234,187 +365,243 @@ st.markdown("""
         font-family: 'Amiri', 'Cairo', serif !important;
         font-size: 1.38rem !important;
         line-height: 2.1 !important;
-        background-color: #14110E !important;
-        color: #FAF6EE !important;
-        border: 1px solid var(--gold-border) !important;
+        background-color: #FFFFFF !important;
+        color: #162133 !important;
+        border: 1.5px solid #DCD5C7 !important;
         border-radius: 14px !important;
         padding: 1rem 1.2rem !important;
         direction: rtl;
         text-align: right;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: var(--gold-primary) !important;
-        box-shadow: 0 0 0 1px var(--gold-primary) !important;
+        border-color: var(--brand-blue) !important;
+        box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.14) !important;
     }
     .stTextInput input, div[data-baseweb="select"] > div {
-        background-color: #161310 !important;
-        border: 1px solid var(--gold-border) !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #DCD5C7 !important;
         border-radius: 10px !important;
-        color: var(--text-main) !important;
+        color: #162133 !important;
         direction: rtl;
         text-align: right;
-    }
-
-    /* الأزرار الرئيسية والثانوية */
-    .stButton > button[kind="primary"],
-    .stFormSubmitButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #E2BE52 0%, #B98E23 100%) !important;
-        color: #14100C !important;
-        border: none !important;
-        border-radius: 12px !important;
-        font-weight: 800 !important;
-        font-size: 1.02rem !important;
-        padding: 0.65rem 1.4rem !important;
-        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.24) !important;
-        transition: transform 0.15s ease, box-shadow 0.2s ease !important;
-    }
-    .stButton > button[kind="primary"]:hover,
-    .stFormSubmitButton > button[kind="primary"]:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 24px rgba(212, 175, 55, 0.36) !important;
-    }
-    .stButton > button[kind="secondary"],
-    .stDownloadButton > button {
-        background: var(--bg-elevated) !important;
-        color: var(--text-main) !important;
-        border: 1px solid var(--gold-border) !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton > button[kind="secondary"]:hover,
-    .stDownloadButton > button:hover {
-        border-color: var(--gold-primary) !important;
-        color: var(--gold-light) !important;
-        background: rgba(212, 175, 55, 0.08) !important;
     }
 
     /* التبويبات (Tabs) */
     .stTabs [data-baseweb="tab-list"] {
         gap: 6px;
-        background: var(--bg-surface);
+        background: #EFECE5;
         padding: 6px;
-        border-radius: 12px;
-        border: 1px solid var(--gold-border);
+        border-radius: 13px;
     }
     .stTabs [data-baseweb="tab"] {
         border-radius: 9px !important;
         padding: 8px 16px !important;
-        color: var(--text-muted) !important;
-        font-weight: 600 !important;
+        color: #526075 !important;
+        font-weight: 700 !important;
     }
     .stTabs [aria-selected="true"] {
-        background: rgba(212, 175, 55, 0.16) !important;
-        color: var(--gold-light) !important;
-        border-bottom: none !important;
+        background: #FFFFFF !important;
+        color: #1E3A5F !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
     .stTabs [data-baseweb="tab-highlight"] {
         display: none !important;
     }
 
-    /* البطاقات والقوائم القابلة للطي */
-    div[data-testid="stExpander"] {
-        background-color: var(--bg-surface) !important;
-        border: 1px solid var(--gold-border) !important;
-        border-radius: 14px !important;
-        overflow: hidden;
+    /* ترويسة صفحات الأدوات */
+    .tool-header-card {
+        background: #FFFFFF;
+        border: 1px solid var(--border-soft);
+        border-right: 5px solid var(--brand-gold);
+        border-radius: 16px;
+        padding: 1.3rem 1.5rem;
+        margin-bottom: 1.2rem;
+        box-shadow: var(--shadow-card);
     }
-    .info-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--gold-border);
-        border-right: 4px solid var(--gold-primary);
-        border-radius: 14px;
-        padding: 1.15rem 1.35rem;
-        margin-bottom: 1rem;
+    .tool-header-card h2 {
+        margin: 0.35rem 0 0.25rem 0;
+        font-size: 1.55rem;
+        font-weight: 900;
+        color: var(--ink-primary);
     }
-    .info-card-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: var(--gold-light);
-        margin-bottom: 0.35rem;
-    }
-    .info-card-body {
-        font-size: 1rem;
-        color: var(--text-main);
-        line-height: 1.75;
+    .tool-header-card p {
+        margin: 0;
+        color: var(--ink-secondary);
+        font-size: 0.96rem;
     }
 
-    /* بطاقات الإحصائيات التحليلية */
+    /* بطاقات الإحصائيات والنتائج */
     .metric-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 12px;
-        margin: 0.6rem 0 1.2rem 0;
+        margin: 0.8rem 0 1.2rem 0;
     }
     .metric-box {
-        background: var(--bg-surface);
-        border: 1px solid var(--gold-border);
+        background: #FFFFFF;
+        border: 1px solid var(--border-soft);
         border-radius: 14px;
-        padding: 1rem 1.1rem;
+        padding: 1rem;
         text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
     }
     .metric-box-label {
         font-size: 0.82rem;
-        color: var(--text-muted);
-        margin-bottom: 6px;
+        color: var(--ink-secondary);
+        margin-bottom: 5px;
     }
     .metric-box-value {
-        font-size: 1.25rem;
+        font-size: 1.22rem;
         font-weight: 800;
-        color: var(--gold-light);
+        color: var(--brand-blue);
     }
 
-    /* بطاقة القصيدة في الأرشيف */
-    .poem-card {
-        font-family: 'Amiri', serif;
-        font-size: 1.35rem;
-        background: linear-gradient(180deg, #191511 0%, #13100D 100%);
-        border: 1px solid var(--gold-border);
-        border-right: 4px solid var(--gold-primary);
+    .info-card {
+        background: #FFFFFF;
+        border: 1px solid var(--border-soft);
+        border-right: 4px solid var(--brand-blue);
         border-radius: 14px;
-        padding: 1.25rem 1.5rem;
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+    }
+    .info-card-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--brand-gold);
+        margin-bottom: 0.35rem;
+    }
+    .info-card-body {
+        font-size: 0.98rem;
+        color: var(--ink-primary);
+        line-height: 1.75;
+    }
+
+    .poem-card {
+        font-family: 'Amiri', serif !important;
+        font-size: 1.35rem;
+        background: #FCFBF8;
+        border: 1px solid var(--border-soft);
+        border-right: 4px solid var(--brand-gold);
+        border-radius: 14px;
+        padding: 1.2rem 1.4rem;
         margin-bottom: 0.9rem;
         white-space: pre-line;
         line-height: 2.15;
-        color: #FBF7EF;
+        color: var(--ink-primary);
     }
     .tag-row {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        margin-bottom: 0.9rem;
+        margin-bottom: 0.85rem;
     }
     .tag-pill {
-        font-size: 0.8rem;
-        background: rgba(212, 175, 55, 0.10);
-        border: 1px solid rgba(212, 175, 55, 0.28);
-        color: var(--gold-light);
+        font-size: 0.78rem;
+        font-weight: 700;
+        background: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        color: #1E3A5F;
         padding: 4px 11px;
         border-radius: 999px;
     }
 
-    /* صناديق الترجمة العالمية */
+    /* صناديق الترجمة */
     .translation-box {
-        background: #14110E;
-        border: 1px solid var(--gold-border);
+        background: #FFFFFF;
+        border: 1px solid var(--border-soft);
         border-radius: 14px;
-        padding: 1.3rem 1.4rem;
+        padding: 1.25rem 1.4rem;
         direction: ltr;
         text-align: left;
         line-height: 1.85;
         font-size: 1.02rem;
-        color: #EFE9DF;
-        min-height: 140px;
+        color: #1E293B;
+        min-height: 130px;
     }
     .lang-header {
-        font-size: 0.82rem;
-        font-weight: 700;
+        font-size: 0.8rem;
+        font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: var(--gold-light);
-        margin-bottom: 0.6rem;
+        letter-spacing: 0.7px;
+        color: var(--brand-gold);
+        margin-bottom: 0.55rem;
         direction: ltr;
         text-align: left;
+    }
+
+    /* قسم حول المشروع والتذييل */
+    .about-box {
+        background: #FFFFFF;
+        border: 1px solid var(--border-soft);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2.2rem;
+        box-shadow: var(--shadow-card);
+    }
+    .about-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.2rem;
+        margin-top: 1.2rem;
+    }
+    .about-pillar {
+        background: #F8F7F4;
+        border-radius: 14px;
+        padding: 1.1rem 1.2rem;
+        border: 1px solid var(--border-soft);
+    }
+    .about-pillar h4 {
+        margin: 0 0 0.4rem 0;
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--brand-blue);
+    }
+    .about-pillar p {
+        margin: 0;
+        font-size: 0.88rem;
+        color: var(--ink-secondary);
+        line-height: 1.65;
+    }
+
+    .site-footer {
+        margin-top: 3rem;
+        padding: 1.6rem 1.2rem;
+        background: #162133;
+        color: #E2E8F0;
+        border-radius: 18px;
+        text-align: center;
+    }
+    .site-footer-brand {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #FDE68A;
+        margin-bottom: 0.35rem;
+    }
+    .site-footer-text {
+        font-size: 0.86rem;
+        color: #94A3B8;
+        margin: 0;
+    }
+
+    .secure-badge {
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        margin: 6px 0 10px 0;
+        border: 1px solid #BBF7D0;
+        background: #F0FDF4;
+        color: #166534;
+        font-weight: 600;
+    }
+    .warn-badge {
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        margin: 6px 0 10px 0;
+        border: 1px solid #FDE68A;
+        background: #FFFBEB;
+        color: #92400E;
+        font-weight: 600;
     }
 
     .stCodeBlock {
@@ -422,41 +609,12 @@ st.markdown("""
         text-align: left;
     }
 
-    /* شارات الحالة الأمنية */
-    .secure-badge {
-        padding: 8px 12px;
-        border-radius: 10px;
-        font-size: 0.82rem;
-        margin: 6px 0 10px 0;
-        border: 1px solid rgba(76, 175, 80, 0.35);
-        background: rgba(76, 175, 80, 0.10);
-        color: #A5D6A7;
-    }
-    .warn-badge {
-        padding: 8px 12px;
-        border-radius: 10px;
-        font-size: 0.82rem;
-        margin: 6px 0 10px 0;
-        border: 1px solid rgba(255, 193, 7, 0.35);
-        background: rgba(255, 193, 7, 0.10);
-        color: #FFE082;
-    }
-
     @media (max-width: 768px) {
-        .hero-banner {
-            padding: 1.3rem 1.2rem;
+        .hero-headline {
+            font-size: 1.7rem;
         }
-        .hero-title {
-            font-size: 1.45rem;
-        }
-        .hero-stat-pill {
-            flex: 1;
-            min-width: 80px;
-            padding: 8px 10px;
-        }
-        div[data-testid="stRadio"] label {
-            padding: 8px 10px !important;
-            font-size: 0.88rem !important;
+        .feature-card-body {
+            min-height: auto;
         }
     }
 </style>
@@ -795,7 +953,7 @@ class LocalHassaniyaEngine:
         return {
             "poem_type": poem_type,
             "dominant_meter": details[0]["estimated_meter"] if details else "غير محدد",
-            "cultural_context": "فعّل التحليل الذكي (AI Mode) من إعدادات القائمة الجانبية للحصول على التشكيل الصوتي، الشرح الثقافي، والترجمة الأدبية.",
+            "cultural_context": "فعّل التحليل الذكي (AI Mode) من القائمة الجانبية للحصول على التشكيل الصوتي الدقيق، الشرح الثقافي، والترجمة الأدبية.",
             "recommended_azawan": "لبياظ (تقديري)",
             "lines": details,
             "glossary": [],
@@ -935,13 +1093,13 @@ class AzawanMusicDirector:
 
 
 # ==========================================
-# 7. تهيئة الحالة والدوال المساعدة
+# 7. تهيئة الحالة والدوال المساعدة للتنقل
 # ==========================================
 local_engine = LocalHassaniyaEngine()
 director = AzawanMusicDirector()
 
 SAMPLES = {
-    "كاف (لبتيت)": "الصحرا دار الكرم والجود\nفيها الخيمة والگلب الصافي\nتاريخ أجدادنا المعهود\nيبقى في كل زمن وافي",
+    "كاف": "الصحرا دار الكرم والجود\nفيها الخيمة والگلب الصافي\nتاريخ أجدادنا المعهود\nيبقى في كل زمن وافي",
     "تبراع": "يا گلب اصبر لا تلوم\nالزين يبان ف كل يوم",
 }
 
@@ -960,16 +1118,23 @@ VOCAL_TYPES = [
     "Traditional chorus with lead vocalist",
 ]
 
+if "current_view" not in st.session_state:
+    st.session_state["current_view"] = "home"
+if "expand_audio" not in st.session_state:
+    st.session_state["expand_audio"] = False
 if "poem_input_text" not in st.session_state:
     st.session_state["poem_input_text"] = ""
-if "nav_page" not in st.session_state:
-    st.session_state["nav_page"] = "🧪 المختبر والتحليل"
 if "azawan_mode" not in st.session_state:
     st.session_state["azawan_mode"] = list(director.azawan_modes.keys())[2]
 if "fusion_style" not in st.session_state:
     st.session_state["fusion_style"] = FUSION_STYLES[0]
 if "vocal_type" not in st.session_state:
     st.session_state["vocal_type"] = VOCAL_TYPES[0]
+
+
+def go_to(view_name: str, open_audio: bool = False):
+    st.session_state["current_view"] = view_name
+    st.session_state["expand_audio"] = open_audio
 
 
 def set_poem_text(text: str):
@@ -980,11 +1145,12 @@ def load_poem_into_lab(record: Dict):
     st.session_state["poem_input_text"] = record["poem_text"]
     st.session_state["analysis_result"] = record["analysis"]
     st.session_state["analysis_source"] = f"أرشيف ({record.get('source_engine', 'Saved')})"
-    st.session_state["nav_page"] = "🧪 المختبر والتحليل"
+    st.session_state["current_view"] = "lab"
+    st.session_state["expand_audio"] = False
 
 
 # ==========================================
-# 8. الشريط الجانبي (خفيف ومنظم لإعدادات النظام فقط)
+# 8. الشريط الجانبي (إعدادات النظام المخفية بأمان)
 # ==========================================
 on_cloud = is_running_on_cloud()
 secret_mongo_uri = get_secret_safe("MONGODB_URI", "")
@@ -992,8 +1158,8 @@ secret_mongo_db = get_secret_safe("MONGODB_DB_NAME", "albidan_corpus")
 secret_gemini_key = get_secret_safe("GEMINI_API_KEY", "")
 
 with st.sidebar:
-    st.markdown("### 🐪 مختبر البيظان")
-    st.caption("إعدادات المحرك والربط السحابي")
+    st.markdown("### ⚙️ إعدادات المنصة")
+    st.caption("إدارة الذكاء الاصطناعي والاتصال السحابي")
 
     with st.expander("🧠 محرك الذكاء الاصطناعي", expanded=True):
         if secret_gemini_key:
@@ -1018,7 +1184,7 @@ with st.sidebar:
         model_name = st.selectbox("نموذج الذكاء الاصطناعي:", options=available_models, index=0)
         use_ai = st.toggle("تفعيل التحليل الذكي (AI)", value=bool(api_key))
 
-    with st.expander("🗄️ قاعدة البيانات والأرشيف", expanded=False):
+    with st.expander("🗄️ قاعدة البيانات", expanded=False):
         if on_cloud:
             storage_options = ["التخزين السحابي — MongoDB Atlas"]
         else:
@@ -1066,57 +1232,307 @@ stats = archive.get_stats()
 
 
 # ==========================================
-# 9. الترويسة السينمائية + شريط التنقل العلوي
+# 9. شريط التنقل العلوي الموحد (Top Navbar)
 # ==========================================
-st.markdown(
-    f"""
-    <div class="hero-banner">
-        <div class="hero-top">
+nav_c0, nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns([2.3, 1.05, 1.15, 1.1, 1.05, 1.15])
+
+with nav_c0:
+    st.markdown(
+        """
+        <div class="brand-logo">
+            <div class="brand-icon">🐪</div>
             <div>
-                <div class="hero-badge">ALBIDAN AI LAB • التراث الحساني للعالمية</div>
-                <h1 class="hero-title">مختبر البيظان للشعر الحساني وهندسة أزوان</h1>
-                <p class="hero-subtitle">منصة ذكية للتفريغ الصوتي، التقطيع العروضي الدقيق، توثيق المعجم الحساني، وصناعة الموسيقى التوليدية.</p>
+                <div class="brand-text-main">مختبر البيظان</div>
+                <div class="brand-text-sub">ALBIDAN AI LAB</div>
             </div>
-            <div class="hero-stats">
-                <div class="hero-stat-pill">
-                    <div class="hero-stat-num">{stats['poems_count']}</div>
-                    <div class="hero-stat-lbl">القصائد</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+view = st.session_state["current_view"]
+nav_c1.button(
+    "الرئيسية",
+    key="nav_home",
+    type="primary" if view == "home" else "secondary",
+    on_click=go_to,
+    args=("home",),
+    use_container_width=True
+)
+nav_c2.button(
+    "المختبر العروضي",
+    key="nav_lab",
+    type="primary" if view == "lab" else "secondary",
+    on_click=go_to,
+    args=("lab",),
+    use_container_width=True
+)
+nav_c3.button(
+    "استوديو أزوان",
+    key="nav_azawan",
+    type="primary" if view == "azawan" else "secondary",
+    on_click=go_to,
+    args=("azawan",),
+    use_container_width=True
+)
+nav_c4.button(
+    "المدونة",
+    key="nav_archive",
+    type="primary" if view == "archive" else "secondary",
+    on_click=go_to,
+    args=("archive",),
+    use_container_width=True
+)
+nav_c5.button(
+    "المعجم",
+    key="nav_glossary",
+    type="primary" if view == "glossary" else "secondary",
+    on_click=go_to,
+    args=("glossary",),
+    use_container_width=True
+)
+
+st.markdown("<div style='height: 10px; border-bottom: 1px solid #E7E2D8; margin-bottom: 1.4rem;'></div>", unsafe_allow_html=True)
+
+
+# ==========================================
+# الصفحة الرئيسية (Home — بأسلوب بوابة Tamazight For All)
+# ==========================================
+if view == "home":
+    hero_right, hero_left = st.columns([1.25, 1], gap="large")
+
+    with hero_right:
+        st.markdown(
+            """
+            <div class="hero-eyebrow">✨ منصة التراث الحساني والذكاء الاصطناعي</div>
+            <h1 class="hero-headline">اكتشف جمال <span>الشعر الحساني</span> وهندسة أزوان للعالمية</h1>
+            <p class="hero-desc">
+                من التقطيع العروضي الدقيق لبحور لغنى والتبراع، إلى التفريغ الصوتي الآلي وبناء المعجم الحساني المتنامي وإخراج الأعمال الغنائية التوليدية بمقامات أزوان الأصيلة.
+            </p>
+            """,
+            unsafe_allow_html=True
+        )
+        cta1, cta2 = st.columns(2)
+        cta1.button(
+            "🚀 ابدأ التحليل الآن",
+            type="primary",
+            on_click=go_to,
+            args=("lab", False),
+            use_container_width=True
+        )
+        cta2.button(
+            "📚 تصفح المدونة الحسانية",
+            type="secondary",
+            on_click=go_to,
+            args=("archive",),
+            use_container_width=True
+        )
+
+    with hero_left:
+        st.markdown(
+            f"""
+            <div class="hero-visual-card">
+                <div class="hero-visual-top">
+                    <span class="hero-visual-pill">🏜️ نموذج كاف — بحر لبتيت التام</span>
+                    <span style="font-size: 0.8rem; color: #CBD5E1;">8 متحركات</span>
                 </div>
-                <div class="hero-stat-pill">
-                    <div class="hero-stat-num">{stats['lines_count']}</div>
-                    <div class="hero-stat-lbl">الأشطر</div>
+                <div class="hero-poem-quote">
+                    الصحرا دار الكرم والجود<br>
+                    فيها الخيمة والگلب الصافي<br>
+                    تاريخ أجدادنا المعهود<br>
+                    يبقى في كل زمن وافي
                 </div>
-                <div class="hero-stat-pill">
-                    <div class="hero-stat-num">{stats['terms_count']}</div>
-                    <div class="hero-stat-lbl">المفردات</div>
+                <div class="hero-mini-stats">
+                    <div class="hero-mini-box">
+                        <div class="hero-mini-num">{stats['poems_count']}</div>
+                        <div class="hero-mini-lbl">قصيدة موثقة</div>
+                    </div>
+                    <div class="hero-mini-box">
+                        <div class="hero-mini-num">{stats['lines_count']}</div>
+                        <div class="hero-mini-lbl">شطر (تافلويت)</div>
+                    </div>
+                    <div class="hero-mini-box">
+                        <div class="hero-mini-num">{stats['terms_count']}</div>
+                        <div class="hero-mini-lbl">مفردة معجمية</div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # شبكة البطاقات التفاعلية (القلب البصري للمنصة)
+    st.markdown(
+        """
+        <div class="section-head">
+            <h2>أدوات ومختبرات المنصة</h2>
+            <p>اختر الأداة التي تريدها وابدأ مباشرة في التوثيق والتحليل والإبداع الموسيقي الحساني مجاناً</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    cards_row1 = [
+        {
+            "badge": "أداة ذكية",
+            "badge_cls": "badge-blue",
+            "icon": "🔬",
+            "icon_bg": "#EFF6FF",
+            "title": "المُحلل العروضي الحساني",
+            "sub": "تقطيع صوتي وعدّ المتحركات",
+            "desc": "أدخل أي كاف أو طلعة أو تبراع للحصول على التشكيل الصوتي الحساني وتحديد البحر والروي والغرض الثقافي.",
+            "btn": "ابدأ التحليل ←",
+            "target": ("lab", False),
+            "key": "card_lab"
+        },
+        {
+            "badge": "ذكاء صوتي",
+            "badge_cls": "badge-amber",
+            "icon": "🎙️",
+            "icon_bg": "#FFFBEB",
+            "title": "التفريغ الصوتي للتراث",
+            "sub": "من الصوت إلى نص بحرف الگاف",
+            "desc": "ارفع تسجيلاً صوتياً (MP3 / WAV / M4A) لتحويله تلقائياً إلى أبيات حسانية مضبوطة ومرتبة شطراً بشطر.",
+            "btn": "ارفع تسجيلاً ←",
+            "target": ("lab", True),
+            "key": "card_audio"
+        },
+        {
+            "badge": "إبداع موسيقي",
+            "badge_cls": "badge-purple",
+            "icon": "🎵",
+            "icon_bg": "#F5F3FF",
+            "title": "استوديو أزوان التوليدي",
+            "sub": "مقامات كر • فاغو • لبياظ • لكحال",
+            "desc": "حوّل القصائد الحسانية إلى وصف موسيقي احترافي وكلمات منسقة جاهزة للغناء التوليدي بآلات التيدينيت والآردين.",
+            "btn": "افتح الاستوديو ←",
+            "target": ("azawan", False),
+            "key": "card_azawan"
+        },
+    ]
+
+    cards_row2 = [
+        {
+            "badge": "تراث حي",
+            "badge_cls": "badge-emerald",
+            "icon": "📚",
+            "icon_bg": "#ECFDF5",
+            "title": "المدونة الحسانية المفتوحة",
+            "sub": f"{stats['poems_count']} قصيدة • {stats['lines_count']} شطر",
+            "desc": "أرشيف سحابي منظم للقصائد المحللة حسب الشاعر والمنطقة والبحر، مع إمكانية التصدير بصيغة JSONL.",
+            "btn": "استكشف المدونة ←",
+            "target": ("archive", False),
+            "key": "card_archive"
+        },
+        {
+            "badge": "معجم متنامي",
+            "badge_cls": "badge-teal",
+            "icon": "📖",
+            "icon_bg": "#F0FDFA",
+            "title": "المعجم الحساني التفاعلي",
+            "sub": f"{stats['terms_count']} مفردة موثقة",
+            "desc": "قاموس يتوسع تلقائياً مع كل قصيدة تُحفظ، يشرح المفردات الحسانية الأصيلة بالعربية الفصحى والإنجليزية.",
+            "btn": "تصفح المعجم ←",
+            "target": ("glossary", False),
+            "key": "card_glossary"
+        },
+        {
+            "badge": "ترجمة عالمية",
+            "badge_cls": "badge-rose",
+            "icon": "🌍",
+            "icon_bg": "#FFF1F2",
+            "title": "الترجمة الشعرية العالمية",
+            "sub": "الإنجليزية والفرنسية الأدبية",
+            "desc": "انقل جماليات الشعر الحساني ورمزية الخيمة والصحراء إلى الجمهور العالمي بترجمة شعرية تحافظ على الروح والمعنى.",
+            "btn": "جرّب الترجمة ←",
+            "target": ("lab", False),
+            "key": "card_trans"
+        },
+    ]
+
+    for row_cards in (cards_row1, cards_row2):
+        cols = st.columns(3, gap="medium")
+        for col, card in zip(cols, row_cards):
+            with col:
+                with st.container(border=True):
+                    st.markdown(
+                        f"""
+                        <div class="feature-card-body">
+                            <div class="feature-top-row">
+                                <span class="feature-icon-box" style="background: {card['icon_bg']};">{card['icon']}</span>
+                                <span class="badge-pill {card['badge_cls']}">{card['badge']}</span>
+                            </div>
+                            <h3 class="feature-title">{card['title']}</h3>
+                            <div class="feature-subtitle">{card['sub']}</div>
+                            <p class="feature-desc">{card['desc']}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    st.button(
+                        card["btn"],
+                        key=card["key"],
+                        on_click=go_to,
+                        args=card["target"],
+                        use_container_width=True
+                    )
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+    # قسم حول المشروع (بأسلوب التعريف بالمنصة)
+    st.markdown(
+        """
+        <div class="about-box">
+            <span class="badge-pill badge-amber">حول المشروع</span>
+            <h2 style="margin: 0.5rem 0 0.5rem 0; font-size: 1.55rem; font-weight: 900; color: #162133;">
+                لماذا مختبر البيظان (ALBIDAN AI Lab)؟
+            </h2>
+            <p style="color: #526075; font-size: 0.98rem; line-height: 1.8; margin: 0;">
+                مبادرة رقمية رائدة تهدف إلى صون التراث الشعري والموسيقي الحساني وتوظيف أحدث تقنيات الذكاء الاصطناعي لخدمة الباحثين، الشعراء، وعشاق الثقافة الصحراوية في المغرب وموريتانيا والعالم.
+            </p>
+            <div class="about-grid">
+                <div class="about-pillar">
+                    <h4>⚖️ دقة العروض الحساني</h4>
+                    <p>مراعاة ظاهرة الابتداء بالساكن وعدّ المتحركات لتمييز السغير، لبتيت الناقص والتام، والبت لكبير.</p>
+                </div>
+                <div class="about-pillar">
+                    <h4>🏛️ ذاكرة رقمية مفتوحة</h4>
+                    <p>توثيق سحابي دائم للقصائد والمفردات النادرة وتصديرها بصيغ معيارية قابلة للبحث والتطوير.</p>
+                </div>
+                <div class="about-pillar">
+                    <h4>🎶 جسر نحو العالمية</h4>
+                    <p>دمج مقامات أزوان الأصيلة مع أدوات الترجمة الأدبية والغناء التوليدي لإيصال الإبداع الحساني للعالم.</p>
                 </div>
             </div>
         </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-nav_page = st.radio(
-    "التنقل:",
-    [
-        "🧪 المختبر والتحليل",
-        "📚 المدونة والأرشيف",
-        "📖 المعجم الحساني"
-    ],
-    key="nav_page",
-    horizontal=True,
-    label_visibility="collapsed"
-)
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # ==========================================
-# الصفحة 1: المختبر والتحليل
+# صفحة 1: المختبر العروضي والتفريغ الصوتي
 # ==========================================
-if nav_page == "🧪 المختبر والتحليل":
-    with st.expander("🎙️ التفريغ الصوتي التلقائي (ارفع تسجيلاً صوتياً لقصيدة حسانية)", expanded=False):
+elif view == "lab":
+    back_c, _ = st.columns([1.4, 5])
+    back_c.button("→ العودة للرئيسية", on_click=go_to, args=("home",), use_container_width=True)
+
+    st.markdown(
+        """
+        <div class="tool-header-card">
+            <span class="badge-pill badge-blue">أداة ذكية • العروض والترجمة</span>
+            <h2>المُحلل العروضي والتفريغ الصوتي الحساني</h2>
+            <p>اكتب أبياتك الحسانية أو ارفع تسجيلاً صوتياً لتحصل على التقطيع الصوتي الدقيق، المعجم، والترجمة الأدبية.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.expander(
+        "🎙️ رفع تسجيل صوتي لقصيدة حسانية (MP3 / WAV / M4A) وتفريغه تلقائياً",
+        expanded=st.session_state.get("expand_audio", False)
+    ):
         uploaded_audio = st.file_uploader(
-            "يدعم الصيغ MP3, WAV, M4A, OGG, FLAC (بحد أقصى 20 ميجابايت):",
+            "اختر ملفاً صوتياً (الحد الأقصى 20 ميجابايت):",
             type=["mp3", "wav", "m4a", "ogg", "flac"]
         )
         if uploaded_audio is not None:
@@ -1130,7 +1546,7 @@ if nav_page == "🧪 المختبر والتحليل":
 
                 if transcribe_only_btn or transcribe_and_analyze_btn:
                     if not api_key.strip():
-                        st.warning("يرجى تفعيل مفتاح Gemini API من القائمة الجانبية لتشغيل التفريغ الصوتي.")
+                        st.warning("يرجى ضبط مفتاح Gemini API من القائمة الجانبية لتشغيل التفريغ الصوتي.")
                     else:
                         try:
                             with st.spinner("جاري الاستماع وتفريغ القصيدة الحسانية..."):
@@ -1154,44 +1570,29 @@ if nav_page == "🧪 المختبر والتحليل":
                         except Exception as e:
                             st.error(f"حدث خطأ أثناء معالجة الصوت: {e}")
 
-    # شريط النماذج السريعة فوق محرر القصيدة
-    q1, q2, q3, q4 = st.columns([2.4, 1.2, 1.1, 0.9])
-    q1.markdown("**✍️ محرر النص الشعري الحساني** *(ضع كل تافلويت في سطر)*")
-    q2.button(
-        "✨ نموذج كاف",
-        on_click=set_poem_text,
-        args=(SAMPLES["كاف (لبتيت)"],),
-        use_container_width=True
-    )
-    q3.button(
-        "✨ نموذج تبراع",
-        on_click=set_poem_text,
-        args=(SAMPLES["تبراع"],),
-        use_container_width=True
-    )
-    q4.button(
-        "🧹 مسح",
-        on_click=set_poem_text,
-        args=("",),
-        use_container_width=True
-    )
+    with st.container(border=True):
+        q1, q2, q3, q4 = st.columns([2.6, 1.1, 1.1, 0.9])
+        q1.markdown("**✍️ أدخل النص الشعري الحساني** *(ضع كل تافلويت في سطر مستقل)*")
+        q2.button("✨ نموذج كاف", on_click=set_poem_text, args=(SAMPLES["كاف"],), use_container_width=True)
+        q3.button("✨ نموذج تبراع", on_click=set_poem_text, args=(SAMPLES["تبراع"],), use_container_width=True)
+        q4.button("🧹 مسح", on_click=set_poem_text, args=("",), use_container_width=True)
 
-    poem_input = st.text_area(
-        "النص الشعري:",
-        key="poem_input_text",
-        height=180,
-        label_visibility="collapsed",
-        placeholder="اكتب الكاف أو الطلعة أو التبراع هنا، أو اختر أحد النماذج الجاهزة بالأعلى..."
-    )
+        poem_input = st.text_area(
+            "النص الشعري:",
+            key="poem_input_text",
+            height=175,
+            label_visibility="collapsed",
+            placeholder="اكتب الكاف أو الطلعة أو التبراع هنا، أو اختر نموذجاً جاهزاً بالأعلى..."
+        )
 
-    analyze_btn = st.button("🚀 تحليل القصيدة وتوليد العمل العالمي", type="primary", use_container_width=True)
+        analyze_btn = st.button("🚀 تحليل القصيدة وتوليد العمل العالمي", type="primary", use_container_width=True)
 
     if analyze_btn:
         if not poem_input.strip():
             st.warning("يرجى إدخال بيت شعري واحد على الأقل للبدء.")
         else:
             if use_ai and api_key.strip():
-                with st.spinner("جاري التقطيع الصوتي الحساني، استخراج المعجم، والترجمة الأدبية..."):
+                with st.spinner("جاري التقطيع الصوتي الحساني واستخراج المعجم والترجمة الأدبية..."):
                     try:
                         st.session_state["analysis_result"] = analyze_with_gemini(
                             poem_input, api_key.strip(), model_name
@@ -1209,18 +1610,20 @@ if nav_page == "🧪 المختبر والتحليل":
     if "analysis_result" in st.session_state:
         res = st.session_state["analysis_result"]
         lines_list = [item["original_line"] for item in res["lines"]]
-        selected_mode = st.session_state["azawan_mode"]
-        fusion_style = st.session_state["fusion_style"]
-        vocal_type = st.session_state["vocal_type"]
-        music_data = director.generate_song_structure(lines_list, selected_mode, fusion_style, vocal_type)
+        music_data = director.generate_song_structure(
+            lines_list,
+            st.session_state["azawan_mode"],
+            st.session_state["fusion_style"],
+            st.session_state["vocal_type"]
+        )
 
-        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
         tab1, tab2, tab3, tab4 = st.tabs([
-            "📊 العروض والتقطيع",
-            "🌍 الترجمة والمعجم",
-            "🎵 استوديو أزوان",
-            "💾 الحفظ والتصدير"
+            "📊 العروض والتقطيع الصوتي",
+            "🌍 الترجمة العالمية والمعجم",
+            "🎵 هندسة أزوان",
+            "💾 التوثيق والتصدير"
         ])
 
         with tab1:
@@ -1319,7 +1722,6 @@ if nav_page == "🧪 المختبر والتحليل":
                 st.info("فعّل التحليل الذكي (AI) لاستخراج شرح المفردات الحسانية تلقائياً.")
 
         with tab3:
-            st.markdown("#### 🎛️ تخصيص الإخراج الموسيقي (أزوان × Suno AI)")
             mc1, mc2, mc3 = st.columns(3)
             selected_mode = mc1.selectbox(
                 "المقام الموسيقي (أزوان):",
@@ -1336,7 +1738,6 @@ if nav_page == "🧪 المختبر والتحليل":
                 VOCAL_TYPES,
                 key="vocal_type"
             )
-
             music_data = director.generate_song_structure(lines_list, selected_mode, fusion_style, vocal_type)
 
             st.markdown("**1. وصف النمط الموسيقي (Style Prompt):**")
@@ -1346,32 +1747,32 @@ if nav_page == "🧪 المختبر والتحليل":
             st.code(music_data["formatted_lyrics"], language="text")
 
         with tab4:
-            st.markdown("#### 💾 توثيق القصيدة في المدونة السحابية")
-            with st.form("save_poem_form", clear_on_submit=True):
-                fc1, fc2, fc3 = st.columns(3)
-                save_title = fc1.text_input("عنوان القصيدة:", placeholder="مثال: كاف في مدح الصحراء")
-                save_poet = fc2.text_input("الشاعر / الراوي:", placeholder="مثال: تراث شعبي أو اسم الشاعر")
-                save_region = fc3.text_input("المنطقة / المصدر:", value="الصحراء المغربية")
-                save_submitted = st.form_submit_button(
-                    "📥 حفظ في المدونة وتحديث المعجم",
-                    type="primary",
-                    use_container_width=True
-                )
-
-                if save_submitted:
-                    new_id = archive.save_poem(
-                        title=save_title,
-                        poet=save_poet,
-                        region=save_region,
-                        poem_text=poem_input,
-                        analysis_res=res,
-                        music_data=music_data,
-                        azawan_mode=st.session_state["azawan_mode"],
-                        source_engine=st.session_state.get("analysis_source", "Local"),
+            with st.container(border=True):
+                st.markdown("#### 💾 توثيق القصيدة في المدونة السحابية")
+                with st.form("save_poem_form", clear_on_submit=True):
+                    fc1, fc2, fc3 = st.columns(3)
+                    save_title = fc1.text_input("عنوان القصيدة:", placeholder="مثال: كاف في مدح الصحراء")
+                    save_poet = fc2.text_input("الشاعر / الراوي:", placeholder="مثال: تراث شعبي أو اسم الشاعر")
+                    save_region = fc3.text_input("المنطقة / المصدر:", value="الصحراء المغربية")
+                    save_submitted = st.form_submit_button(
+                        "📥 حفظ في المدونة وتحديث المعجم",
+                        type="primary",
+                        use_container_width=True
                     )
-                    st.success(f"تم التوثيق بنجاح في الأرشيف (المعرّف: {new_id}) وتحديث المعجم الحساني!")
 
-            st.divider()
+                    if save_submitted:
+                        new_id = archive.save_poem(
+                            title=save_title,
+                            poet=save_poet,
+                            region=save_region,
+                            poem_text=poem_input,
+                            analysis_res=res,
+                            music_data=music_data,
+                            azawan_mode=st.session_state["azawan_mode"],
+                            source_engine=st.session_state.get("analysis_source", "Local"),
+                        )
+                        st.success(f"تم التوثيق بنجاح في الأرشيف (المعرّف: {new_id}) وتحديث المعجم الحساني!")
+
             export_payload = {
                 "source_engine": st.session_state.get("analysis_source", "Local"),
                 "poem_analysis": res,
@@ -1392,32 +1793,97 @@ if nav_page == "🧪 المختبر والتحليل":
 
 
 # ==========================================
-# الصفحة 2: المدونة والأرشيف
+# صفحة 2: استوديو أزوان المستقل
 # ==========================================
-elif nav_page == "📚 المدونة والأرشيف":
-    f1, f2, f3 = st.columns([3, 1.4, 1.4])
-    search_q = f1.text_input(
-        "🔍 ابحث في المدونة:",
-        placeholder="ابحث بكلمة، عنوان، شاعر، بحر، أو مدينة (بوجدور، العيون...)"
+elif view == "azawan":
+    back_c, _ = st.columns([1.4, 5])
+    back_c.button("→ العودة للرئيسية", on_click=go_to, args=("home",), use_container_width=True)
+
+    st.markdown(
+        """
+        <div class="tool-header-card">
+            <span class="badge-pill badge-purple">إبداع موسيقي • أزوان × Suno AI</span>
+            <h2>استوديو أزوان والغناء التوليدي</h2>
+            <p>صمّم الهوية الموسيقية للقصيدة الحسانية حسب المقامات التقليدية (كر، فاغو، لبياظ، لكحال) واحصل على أمر جاهز للتوليد.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-    type_filter = f2.selectbox("تصنيف القطعة:", ["الكل", "تبراع", "كاف", "طلعة"])
 
-    poems_list = archive.list_poems(search_query=search_q, type_filter=type_filter)
+    with st.container(border=True):
+        s_col1, s_col2 = st.columns([2, 1])
+        studio_text = s_col1.text_area(
+            "✍️ الأبيات الحسانية المراد تلحينها (كل شطر في سطر):",
+            value=st.session_state.get("poem_input_text") or SAMPLES["كاف"],
+            height=190
+        )
+        with s_col2:
+            s_mode = st.selectbox("المقام الموسيقي (أزوان):", list(director.azawan_modes.keys()), key="studio_mode")
+            s_fusion = st.selectbox("النمط العالمي (Fusion):", FUSION_STYLES, key="studio_fusion")
+            s_vocal = st.selectbox("طبيعة الصوت الغنائي:", VOCAL_TYPES, key="studio_vocal")
 
-    with f3:
-        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-        if poems_list:
-            jsonl_content = "\n".join(json.dumps(p, ensure_ascii=False) for p in poems_list)
-            st.download_button(
-                label="🤖 تصدير JSONL",
-                data=jsonl_content,
-                file_name="albidan_hassaniya_corpus.jsonl",
-                mime="application/jsonl",
-                use_container_width=True
-            )
+    studio_lines = [l.strip() for l in studio_text.split("\n") if l.strip()]
+    if studio_lines:
+        studio_music = director.generate_song_structure(studio_lines, s_mode, s_fusion, s_vocal)
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+        m_left, m_right = st.columns(2)
+        with m_left:
+            with st.container(border=True):
+                st.markdown(f"**🎛️ وصف النمط الموسيقي (Style Prompt — {studio_music['bpm']} BPM):**")
+                st.code(studio_music["style_prompt"], language="text")
+        with m_right:
+            with st.container(border=True):
+                st.markdown("**🎤 الكلمات المنسقة بالوسوم الموسيقية (Formatted Lyrics):**")
+                st.code(studio_music["formatted_lyrics"], language="text")
+    else:
+        st.info("أدخل شطراً واحداً على الأقل لتوليد الوصف الموسيقي.")
+
+
+# ==========================================
+# صفحة 3: المدونة والأرشيف
+# ==========================================
+elif view == "archive":
+    back_c, _ = st.columns([1.4, 5])
+    back_c.button("→ العودة للرئيسية", on_click=go_to, args=("home",), use_container_width=True)
+
+    st.markdown(
+        f"""
+        <div class="tool-header-card">
+            <span class="badge-pill badge-emerald">تراث حي • {stats['poems_count']} قصيدة موثقة</span>
+            <h2>المدونة الحسانية المفتوحة (أرشيف القصائد)</h2>
+            <p>استعرض القصائد الحسانية المحللة والموثقة، ابحث بالبحر أو المنطقة، أو صدّر المدونة لتدريب نماذج الذكاء الاصطناعي.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.container(border=True):
+        f1, f2, f3 = st.columns([3, 1.4, 1.4])
+        search_q = f1.text_input(
+            "🔍 ابحث في المدونة:",
+            placeholder="ابحث بكلمة، عنوان، شاعر، بحر، أو مدينة (بوجدور، العيون...)"
+        )
+        type_filter = f2.selectbox("تصنيف القطعة:", ["الكل", "تبراع", "كاف", "طلعة"])
+
+        poems_list = archive.list_poems(search_query=search_q, type_filter=type_filter)
+
+        with f3:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            if poems_list:
+                jsonl_content = "\n".join(json.dumps(p, ensure_ascii=False) for p in poems_list)
+                st.download_button(
+                    label="🤖 تصدير JSONL",
+                    data=jsonl_content,
+                    file_name="albidan_hassaniya_corpus.jsonl",
+                    mime="application/jsonl",
+                    use_container_width=True
+                )
+
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
     if not poems_list:
-        st.info("الأرشيف فارغ حالياً أو لا توجد نتائج مطابقة. حلّل قصيدة في المختبر واحفظها من تبويب «الحفظ والتصدير».")
+        st.info("الأرشيف فارغ حالياً أو لا توجد نتائج مطابقة. حلّل قصيدة في المختبر واحفظها لتظهر هنا.")
     else:
         for rec in poems_list:
             header_label = f"📜 {rec['title']}  —  {rec['poet']}  ({rec['created_at']})"
@@ -1450,39 +1916,70 @@ elif nav_page == "📚 المدونة والأرشيف":
 
 
 # ==========================================
-# الصفحة 3: المعجم الحساني
+# صفحة 4: المعجم الحساني
 # ==========================================
-elif nav_page == "📖 المعجم الحساني":
-    c_search, c_dl = st.columns([3.5, 1.3])
-    g_search = c_search.text_input(
-        "🔍 ابحث في المعجم الحساني:",
-        placeholder="اكتب مفردة حسانية أو معناها بالعربية أو الإنجليزية..."
+elif view == "glossary":
+    back_c, _ = st.columns([1.4, 5])
+    back_c.button("→ العودة للرئيسية", on_click=go_to, args=("home",), use_container_width=True)
+
+    st.markdown(
+        f"""
+        <div class="tool-header-card">
+            <span class="badge-pill badge-teal">معجم متنامي • {stats['terms_count']} مفردة</span>
+            <h2>المعجم الحساني التفاعلي</h2>
+            <p>موسوعة مفردات حسانية تُبنى وتُثرى تلقائياً من كل قصيدة يتم تحليلها وتوثيقها في المختبر.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-    glossary_items = archive.list_glossary(search_query=g_search)
+
+    with st.container(border=True):
+        c_search, c_dl = st.columns([3.5, 1.3])
+        g_search = c_search.text_input(
+            "🔍 ابحث في المعجم الحساني:",
+            placeholder="اكتب مفردة حسانية أو معناها بالعربية أو الإنجليزية..."
+        )
+        glossary_items = archive.list_glossary(search_query=g_search)
+
+        if glossary_items:
+            gloss_df = pd.DataFrame([
+                {
+                    "المفردة الحسانية": item["term"],
+                    "المعنى بالعربية الفصحى": item["arabic_meaning"],
+                    "English Meaning": item["english_meaning"],
+                    "المصدر (القصيدة)": item.get("source_poem_title", ""),
+                    "تاريخ التوثيق": item.get("updated_at", "")
+                }
+                for item in glossary_items
+            ])
+            with c_dl:
+                st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+                csv_bytes = gloss_df.to_csv(index=False).encode("utf-8-sig")
+                st.download_button(
+                    label="📥 تصدير CSV (Excel)",
+                    data=csv_bytes,
+                    file_name="albidan_hassaniya_glossary.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
     if not glossary_items:
         st.info("لم تُضف مفردات بعد. عند حفظ أي قصيدة محللة بالذكاء الاصطناعي، تُضاف مفرداتها تلقائياً هنا.")
     else:
-        gloss_df = pd.DataFrame([
-            {
-                "المفردة الحسانية": item["term"],
-                "المعنى بالعربية الفصحى": item["arabic_meaning"],
-                "English Meaning": item["english_meaning"],
-                "المصدر (القصيدة)": item.get("source_poem_title", ""),
-                "تاريخ التوثيق": item.get("updated_at", "")
-            }
-            for item in glossary_items
-        ])
-
-        with c_dl:
-            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            csv_bytes = gloss_df.to_csv(index=False).encode("utf-8-sig")
-            st.download_button(
-                label="📥 تصدير CSV",
-                data=csv_bytes,
-                file_name="albidan_hassaniya_glossary.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
-
         st.dataframe(gloss_df, use_container_width=True, hide_index=True)
+
+
+# ==========================================
+# 10. التذييل السفلي (Footer)
+# ==========================================
+st.markdown(
+    """
+    <div class="site-footer">
+        <div class="site-footer-brand">🐪 مختبر البيظان — ALBIDAN AI LAB</div>
+        <p class="site-footer-text">منصة رقمية مكرّسة لصون الشعر الحساني، المعجم التراثي، وهندسة موسيقى أزوان للعالمية • © 2026 جميع الحقوق محفوظة</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
