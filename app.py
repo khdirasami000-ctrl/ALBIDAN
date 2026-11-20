@@ -3,6 +3,7 @@ import re
 import html
 import json
 import uuid
+import base64
 import sqlite3
 from datetime import datetime
 from typing import List, Dict
@@ -43,6 +44,29 @@ def get_cached_mongo_client(uri: str):
     client = MongoClient(uri, serverSelectionTimeoutMS=5000)
     client.admin.command("ping")
     return client
+
+
+def get_founder_avatar_html() -> str:
+    """عرض صورة المؤسس تلقائياً عند وجود ملف founder.jpg أو founder.png، وإلا عرض شعار فخم."""
+    for filename, mime in (
+        ("founder.jpg", "image/jpeg"),
+        ("founder.jpeg", "image/jpeg"),
+        ("founder.png", "image/png"),
+        ("founder.webp", "image/webp"),
+    ):
+        if os.path.exists(filename):
+            try:
+                with open(filename, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                return f'<img src="data:{mime};base64,{b64}" class="founder-photo" alt="أڭــار الحبيب" />'
+            except Exception:
+                pass
+    return """
+    <div class="founder-monogram">
+        <div class="founder-monogram-letters">أ ح</div>
+        <div class="founder-monogram-sub">ALBIDAN</div>
+    </div>
+    """
 
 
 # ==========================================
@@ -110,14 +134,6 @@ st.markdown("""
     }
 
     /* شريط التنقل العلوي */
-    .navbar-wrap {
-        background: #FFFFFF;
-        border: 1px solid var(--border-soft);
-        border-radius: 16px;
-        padding: 0.75rem 1.2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 12px rgba(22, 33, 51, 0.04);
-    }
     .brand-logo {
         display: flex;
         align-items: center;
@@ -260,7 +276,7 @@ st.markdown("""
         max-width: 640px;
     }
 
-    /* تنسيق حاويات البطاقات الأصلية st.container(border=True) لتشبه TamazightForAll */
+    /* تنسيق حاويات البطاقات */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-soft) !important;
@@ -296,16 +312,17 @@ st.markdown("""
         font-size: 1.45rem;
     }
     .badge-pill {
+        display: inline-block;
         font-size: 0.74rem;
         font-weight: 800;
         padding: 4px 11px;
         border-radius: 999px;
     }
-    .badge-amber { background: #FEF3C7; color: #92400E; }
-    .badge-blue  { background: #DBEAFE; color: #1E40AF; }
-    .badge-teal  { background: #CCFBF1; color: #115E59; }
-    .badge-purple{ background: #EDE9FE; color: #5B21B6; }
-    .badge-rose  { background: #FFE4E6; color: #9F1239; }
+    .badge-amber  { background: #FEF3C7; color: #92400E; }
+    .badge-blue   { background: #DBEAFE; color: #1E40AF; }
+    .badge-teal   { background: #CCFBF1; color: #115E59; }
+    .badge-purple { background: #EDE9FE; color: #5B21B6; }
+    .badge-rose   { background: #FFE4E6; color: #9F1239; }
     .badge-emerald{ background: #D1FAE5; color: #065F46; }
 
     .feature-title {
@@ -529,7 +546,7 @@ st.markdown("""
         text-align: left;
     }
 
-    /* قسم حول المشروع والتذييل */
+    /* قسم حول المشروع */
     .about-box {
         background: #FFFFFF;
         border: 1px solid var(--border-soft);
@@ -563,9 +580,102 @@ st.markdown("""
         line-height: 1.65;
     }
 
+    /* قسم مؤسس المشروع (بأسلوب Tamazight For All) */
+    .founder-section {
+        background: linear-gradient(135deg, #FFFFFF 0%, #FDFBF7 100%);
+        border: 1px solid var(--border-soft);
+        border-top: 4px solid var(--brand-blue);
+        border-radius: 22px;
+        padding: 2.2rem 2.4rem;
+        margin-top: 2rem;
+        box-shadow: var(--shadow-card);
+    }
+    .founder-layout {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 2.2rem;
+    }
+    .founder-avatar-col {
+        flex-shrink: 0;
+        text-align: center;
+    }
+    .founder-photo {
+        width: 175px;
+        height: 175px;
+        border-radius: 22px;
+        object-fit: cover;
+        border: 4px solid #FDE68A;
+        box-shadow: 0 12px 28px rgba(30, 58, 95, 0.18);
+    }
+    .founder-monogram {
+        width: 170px;
+        height: 170px;
+        border-radius: 24px;
+        background: linear-gradient(145deg, #1E3A5F 0%, #13253D 65%, #3B2A1A 100%);
+        border: 3px solid #EAB308;
+        box-shadow: 0 14px 30px rgba(30, 58, 95, 0.22);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #FDE68A;
+    }
+    .founder-monogram-letters {
+        font-family: 'Amiri', serif !important;
+        font-size: 3.4rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .founder-monogram-sub {
+        font-size: 0.72rem;
+        letter-spacing: 2.2px;
+        color: #CBD5E1;
+        margin-top: 6px;
+        font-weight: 700;
+    }
+    .founder-content {
+        flex: 1;
+    }
+    .founder-name {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--ink-primary);
+        margin: 0.45rem 0 0.15rem 0;
+        line-height: 1.25;
+    }
+    .founder-latin {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--brand-gold);
+        margin: 0 0 0.9rem 0;
+        letter-spacing: 0.4px;
+    }
+    .founder-bio {
+        font-size: 0.98rem;
+        color: var(--ink-secondary);
+        line-height: 1.85;
+        margin: 0 0 1.1rem 0;
+    }
+    .founder-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .founder-tag {
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: #F1F5F9;
+        color: var(--brand-blue);
+        border: 1px solid #DBEAFE;
+        padding: 5px 13px;
+        border-radius: 999px;
+    }
+
+    /* التذييل السفلي */
     .site-footer {
         margin-top: 3rem;
-        padding: 1.6rem 1.2rem;
+        padding: 1.7rem 1.2rem;
         background: #162133;
         color: #E2E8F0;
         border-radius: 18px;
@@ -575,12 +685,13 @@ st.markdown("""
         font-size: 1.15rem;
         font-weight: 800;
         color: #FDE68A;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.4rem;
     }
     .site-footer-text {
         font-size: 0.86rem;
         color: #94A3B8;
         margin: 0;
+        line-height: 1.7;
     }
 
     .secure-badge {
@@ -615,6 +726,20 @@ st.markdown("""
         }
         .feature-card-body {
             min-height: auto;
+        }
+        .founder-section {
+            padding: 1.5rem 1.25rem;
+        }
+        .founder-layout {
+            flex-direction: column;
+            text-align: center;
+            gap: 1.3rem;
+        }
+        .founder-content, .founder-bio, .founder-name, .founder-latin {
+            text-align: center;
+        }
+        .founder-tags {
+            justify-content: center;
         }
     }
 </style>
@@ -1296,7 +1421,7 @@ st.markdown("<div style='height: 10px; border-bottom: 1px solid #E7E2D8; margin-
 
 
 # ==========================================
-# الصفحة الرئيسية (Home — بأسلوب بوابة Tamazight For All)
+# الصفحة الرئيسية (Home)
 # ==========================================
 if view == "home":
     hero_right, hero_left = st.columns([1.25, 1], gap="large")
@@ -1361,7 +1486,7 @@ if view == "home":
             unsafe_allow_html=True
         )
 
-    # شبكة البطاقات التفاعلية (القلب البصري للمنصة)
+    # شبكة البطاقات التفاعلية
     st.markdown(
         """
         <div class="section-head">
@@ -1478,7 +1603,7 @@ if view == "home":
                     )
         st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-    # قسم حول المشروع (بأسلوب التعريف بالمنصة)
+    # قسم حول المشروع
     st.markdown(
         """
         <div class="about-box">
@@ -1501,6 +1626,35 @@ if view == "home":
                 <div class="about-pillar">
                     <h4>🎶 جسر نحو العالمية</h4>
                     <p>دمج مقامات أزوان الأصيلة مع أدوات الترجمة الأدبية والغناء التوليدي لإيصال الإبداع الحساني للعالم.</p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # قسم مؤسس المشروع (أڭــار الحبيب)
+    founder_avatar = get_founder_avatar_html()
+    st.markdown(
+        f"""
+        <div class="founder-section">
+            <div class="founder-layout">
+                <div class="founder-avatar-col">
+                    {founder_avatar}
+                </div>
+                <div class="founder-content">
+                    <span class="badge-pill badge-blue">مؤسس المشروع</span>
+                    <h2 class="founder-name">أڭــار الحبيب</h2>
+                    <div class="founder-latin">Aggar El Habib • مؤسس ومطور مختبر البيظان</div>
+                    <p class="founder-bio">
+                        باحث ومطور مهتم بالشعر الشعبي الحساني وتقنيات الذكاء الاصطناعي من إقليم بوجدور بالصحراء المغربية. يكرّس جهوده لتوظيف البرمجة ومعالجة اللغات الطبيعية في توثيق وحفظ الذاكرة الشفهية الحسانية، وبناء أدوات ذكية للتحليل العروضي، المعجم الحساني المتنامي، وهندسة موسيقى أزوان لإيصال إبداعات ثقافة البيظان إلى الباحثين والجمهور العالمي.
+                    </p>
+                    <div class="founder-tags">
+                        <span class="founder-tag">📜 الشعر الحساني والعروض</span>
+                        <span class="founder-tag">🤖 الذكاء الاصطناعي وتطوير التطبيقات</span>
+                        <span class="founder-tag">🎵 هندسة أزوان التوليدية</span>
+                        <span class="founder-tag">🏛️ الرقمنة والأرشفة الثقافية</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1978,7 +2132,10 @@ st.markdown(
     """
     <div class="site-footer">
         <div class="site-footer-brand">🐪 مختبر البيظان — ALBIDAN AI LAB</div>
-        <p class="site-footer-text">منصة رقمية مكرّسة لصون الشعر الحساني، المعجم التراثي، وهندسة موسيقى أزوان للعالمية • © 2026 جميع الحقوق محفوظة</p>
+        <p class="site-footer-text">
+            منصة رقمية مكرّسة لصون الشعر الحساني، المعجم التراثي، وهندسة موسيقى أزوان للعالمية<br>
+            © 2026 مختبر البيظان — فكرة وتطوير <strong>أڭــار الحبيب</strong>. جميع الحقوق محفوظة.
+        </p>
     </div>
     """,
     unsafe_allow_html=True
