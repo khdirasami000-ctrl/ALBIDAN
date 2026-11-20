@@ -21,8 +21,22 @@ except ImportError:
 
 
 # ==========================================
-# 0. دوال الأسرار والاتصال السحابي الآمن
+# 0. بيانات المؤسس ودوال الأسرار والاتصال السحابي
 # ==========================================
+FOUNDER_PROFILE = {
+    "name": "أڭــار الحبيب",
+    "subtitle": "Aggar Lahbib • مؤسس ومطور مختبر البيظان",
+    "bio": (
+        "مؤسس ومطور «مختبر البيظان للذكاء الاصطناعي». "
+        "يعمل على رقمنة التراث الثقافي الحساني، تحليل العروض الشعري آلياً، "
+        "وتطوير منصات إبداعية للغناء التوليدي بمقامات أزوان الأصيلة."
+    ),
+    "facebook": "https://web.facebook.com/aggarlahbib/?locale=ar_AR",
+    "youtube": "",  # أضف رابط قناتك هنا لاحقاً وسيظهر زر يوتيوب تلقائياً
+    "whatsapp": "212668208797",
+}
+
+
 def get_secret_safe(key: str, default: str = "") -> str:
     try:
         if key in st.secrets:
@@ -67,6 +81,43 @@ def get_founder_avatar_html() -> str:
         <div class="founder-monogram-sub">ALBIDAN</div>
     </div>
     """
+
+
+def build_founder_socials_html(profile: Dict[str, str]) -> str:
+    """إنشاء أزرار التواصل الاجتماعي (تظهر فقط للروابط المُعبّأة)."""
+    buttons = []
+
+    if profile.get("facebook", "").strip():
+        fb_url = html.escape(profile["facebook"].strip())
+        buttons.append(
+            f'<a href="{fb_url}" target="_blank" rel="noopener noreferrer" class="social-btn social-fb">'
+            '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">'
+            '<path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/>'
+            '</svg><span>فيسبوك</span></a>'
+        )
+
+    if profile.get("youtube", "").strip():
+        yt_url = html.escape(profile["youtube"].strip())
+        buttons.append(
+            f'<a href="{yt_url}" target="_blank" rel="noopener noreferrer" class="social-btn social-yt">'
+            '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">'
+            '<path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/>'
+            '</svg><span>يوتيوب</span></a>'
+        )
+
+    wa_clean = re.sub(r"\D", "", profile.get("whatsapp", ""))
+    if wa_clean:
+        wa_url = f"https://wa.me/{wa_clean}"
+        buttons.append(
+            f'<a href="{wa_url}" target="_blank" rel="noopener noreferrer" class="social-btn social-wa">'
+            '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor">'
+            '<path d="M12.04 2a9.94 9.94 0 0 0-8.48 15.16L2 22l4.98-1.52A9.96 9.96 0 1 0 12.04 2zm5.8 14.08c-.24.68-1.42 1.3-1.97 1.38-.52.08-1.18.11-1.9-.12-.44-.14-1-.33-1.72-.64-3.03-1.31-5-4.38-5.15-4.58-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.61-.38.81-.38.2 0 .41 0 .59.01.19.01.44-.07.69.53.25.6.86 2.1.93 2.25.08.15.13.33.03.53-.1.2-.15.33-.3.5-.15.18-.32.4-.45.54-.15.15-.31.31-.13.61.18.3.79 1.3 1.7 2.1 1.17 1.04 2.15 1.37 2.45 1.52.3.15.48.13.66-.08.18-.2.76-.88.96-1.18.2-.3.41-.25.68-.15.28.1 1.75.83 2.05.98.3.15.5.23.58.35.07.13.07.73-.17 1.41z"/>'
+            '</svg><span>واتساب</span></a>'
+        )
+
+    if not buttons:
+        return ""
+    return f'<div class="founder-socials">{"".join(buttons)}</div>'
 
 
 # ==========================================
@@ -580,7 +631,7 @@ st.markdown("""
         line-height: 1.65;
     }
 
-    /* قسم مؤسس المشروع (بأسلوب Tamazight For All) */
+    /* قسم مؤسس المشروع */
     .founder-section {
         background: linear-gradient(135deg, #FFFFFF 0%, #FDFBF7 100%);
         border: 1px solid var(--border-soft);
@@ -672,6 +723,42 @@ st.markdown("""
         border-radius: 999px;
     }
 
+    /* أزرار التواصل الاجتماعي للمؤسس */
+    .founder-socials {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 1.25rem;
+    }
+    .social-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        text-decoration: none !important;
+        color: #FFFFFF !important;
+        transition: transform 0.18s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+    .social-btn:hover {
+        transform: translateY(-2px);
+        opacity: 0.94;
+    }
+    .social-fb {
+        background: #1877F2;
+        box-shadow: 0 4px 12px rgba(24, 119, 242, 0.25);
+    }
+    .social-yt {
+        background: #DC2626;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    }
+    .social-wa {
+        background: #16A34A;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+    }
+
     /* التذييل السفلي */
     .site-footer {
         margin-top: 3rem;
@@ -738,7 +825,7 @@ st.markdown("""
         .founder-content, .founder-bio, .founder-name, .founder-latin {
             text-align: center;
         }
-        .founder-tags {
+        .founder-tags, .founder-socials {
             justify-content: center;
         }
     }
@@ -1635,6 +1722,7 @@ if view == "home":
 
     # قسم مؤسس المشروع (أڭــار الحبيب)
     founder_avatar = get_founder_avatar_html()
+    founder_socials = build_founder_socials_html(FOUNDER_PROFILE)
     st.markdown(
         f"""
         <div class="founder-section">
@@ -1644,17 +1732,16 @@ if view == "home":
                 </div>
                 <div class="founder-content">
                     <span class="badge-pill badge-blue">مؤسس المشروع</span>
-                    <h2 class="founder-name">أڭــار الحبيب</h2>
-                    <div class="founder-latin">Aggar El Habib • مؤسس ومطور مختبر البيظان</div>
-                    <p class="founder-bio">
-                        باحث ومطور مهتم بالشعر الشعبي الحساني وتقنيات الذكاء الاصطناعي من إقليم بوجدور بالصحراء المغربية. يكرّس جهوده لتوظيف البرمجة ومعالجة اللغات الطبيعية في توثيق وحفظ الذاكرة الشفهية الحسانية، وبناء أدوات ذكية للتحليل العروضي، المعجم الحساني المتنامي، وهندسة موسيقى أزوان لإيصال إبداعات ثقافة البيظان إلى الباحثين والجمهور العالمي.
-                    </p>
+                    <h2 class="founder-name">{html.escape(FOUNDER_PROFILE['name'])}</h2>
+                    <div class="founder-latin">{html.escape(FOUNDER_PROFILE['subtitle'])}</div>
+                    <p class="founder-bio">{html.escape(FOUNDER_PROFILE['bio'])}</p>
                     <div class="founder-tags">
                         <span class="founder-tag">📜 الشعر الحساني والعروض</span>
                         <span class="founder-tag">🤖 الذكاء الاصطناعي وتطوير التطبيقات</span>
                         <span class="founder-tag">🎵 هندسة أزوان التوليدية</span>
                         <span class="founder-tag">🏛️ الرقمنة والأرشفة الثقافية</span>
                     </div>
+                    {founder_socials}
                 </div>
             </div>
         </div>
